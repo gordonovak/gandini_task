@@ -1,94 +1,107 @@
 --  File Created July 16th, 2025
 
 
-isgdiv := (m, l) -> (
-    for i to numColumns m - 1 do if (m_i_0-(l_i_0)) < 0 then return false;
-    return true;
+toPoly := (m) -> (
+    n = 1;
+    Re = QQ[v..z];
+    Reg = gens Re;
+    for i when i < #m do (
+        n = n*((Reg_i)^(m_i_0))
+    );
+    return n;
+)
+
+inTrash := (m, trash) -> (
+    
 )
 
 gandiniminimal := (m, L) -> (
-    for l in L do (
-        if (not (l == m) and isgdiv(m, l)) then (
-            m = m - l;
-            if m == 0 then (
-                return false;
-            );
-        );  
+    if m == 0 then return 0;
+    k := numColumns m;
+    for l to #L-1 do (
+        mmin = true;
+        lmin = true;
+        for i to #m - 1 when (mmin or lmin) do (
+            if (m_i_0 > L#l_i_0) then mmin = false;
+            if (L#l_i_0 > m_i_0) then lmin = false;
+        );
+        if lmin then return 0;
+        if mmin then return 1;
     );
-    return true;
+    return 2;
 )
 
 -- Input
 --  * R - polynomialRing
---  * L - list of exponent vectors
+--  * seedList - list of exponent vectors
 --  * p - order of the elementary abelian group
 --  * k - number of rows of the weight matrix
 -- Output
 --  A list of the polynomial invariants that generate the invariant ring
-growseeds = method();
-growseeds(PolynomialRing, List, ZZ, ZZ) := (R, L, p, k) -> (
+growseeds = method();  
+growseeds(PolynomialRing, List, ZZ, ZZ) := (R, seedList, p, k) -> (
 
-    gR = gens R;
-
-    -- First we create a list to keep track of our invariants, whether we want to stop powering or not. 
-    guideList = toList(0..(#L - 1));
+    gR := gens R;
 
     -- Then we create the list we're actually going to add stuff to.
-    M = L;
-
+    seedList = for l in seedList list (matrix({apply(flatten entries(l), x -> ((x % p) + p) % p)}));
+    newList := seedList;
+    trashList := (seedList);
     -- This is the loop that determines the total number of powers that we need to check
     -- The formula is n(p-1) + 1
-    for i from 1 to (k*(p-1)+1) do (
+    iterations = 0;
+    for i from 1 to (k*(p-1)) do (
 
         -- Then, we iterate through all the elements of our seed list. 
-        for m to #L - 1 do (
+        for m when m < #newList do (
 
             -- If the pure power of the first element is minimal, then we continue. 
-            if (guideList#m != -1) then (
-                m' = (L#m)*i;
-                for n in L do (
+            m' := (newList#m)*i;
+            for n to #newList - 1 do (
+                n' := newList#n;
+                -- [P1] ST: This part mods out the exponents. 
+                print ("modding out");
+                print ((toList(timing(
 
-                    -- [P1] ST: This part mods out the exponents. 
-                    mn = m' * transpose n;
-                    m' = matrix(apply(entries m', r -> apply(r, x -> x%p)));
-                    -- [P1] FIN --
+                
 
-                    if (m' != 0) then (
-                        if (n == L#m) then (
-                            M = {m'} | M;
-                        ) else ( -- Then adds non direct-powers to the end of the list. 
-                            M = M | {m'};
-                        );  
-                    );
+                m' =  matrix({apply(
+                    numColumns m', i -> (((m'_i_0 + n'_i_0) % p + p) % p)
+                )});
+
+                )))_0);
+                -- [P1] FIN --
+
+                print "minimizing";
+                print ((toList(timing(
+
+                if (m' != 0) and (not any(trashList, t -> (m' == t))) then (
+                    result = gandiniminimal(m', newList);
+                    if (result == 1) then newList = replace(n, m', newList)
+                    else if (result == 2) then newList = newList | {m'}
+                    else trashList = trashList | {m'};
                 );
-
-                -- We call this function to check for minimal status. 
-                -- If it's not, we update the guidelist accordingly, and remove that element. 
-                print m';
-                if (not gandiniminimal(m', M)) then (
-                    guideList#m = -1;
-                    M = drop(M, 1); -- drop removes the element. 
-                );
+                )))_0);
+                iterations = iterations + 1;
             );
         );
     );
 
     for i from 0 to (numgens R - 1) do (
-        M = M | {matrix({for k to numgens R - 1 list (if i == k then p else 0)})};
+        newList = newList | {matrix({for k to numgens R - 1 list (if i == k then p else 0)})};
     );
 
-    N = {};
+    polyList := {};
 
-    gR = gens R;
-    for i in M do (
+    for i in newList do (
         n = 1;
-        print gens R;
-        for k to #i - 1 do (n = n * (transpose matrix(for r in gens R list r^p)););
-        N = N | {n};
+        for j to #i - 1 do (n = n * ((gR_j)^(i_j_0)));
+        polyList = polyList | {n};
     );
-    print N;
 
-    return flatten entries mingens ideal N;
+    print iterations;
+
+    return polyList;
 )
 
 

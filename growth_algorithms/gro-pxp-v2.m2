@@ -1,17 +1,29 @@
 --  File Created July 16th, 2025
+exponentCompare = method();
+exponentCompare(List, List) := (l, m) -> (
+    if (m == l) then return 2;
+    lbot = true;
+    mbot = true;
+    for k to #m - 1 do(
+        if (l_k > (m#k)) then lbot = false;
+        if (l#k < (m#k)) then mbot = false;
+    );
+    if lbot then return 2;
+    if mbot then return 1;
+    return 0;
+)
 
 isGandiniMinimal = method();
 isGandiniMinimal(List, RingElement) := (L, m) -> (
-    R = ring(m);
-    for l in L do (
-        if (not l == m and (m % l) == 0) then (
-            m = m // l;
-            if m == 1_R then (
-                return false;
-            );
-        );  
+    if (m == 1) then return L;
+    me = flatten(exponents(m));
+    for l when l < #L-1 do (
+        toDo = exponentCompare(flatten(exponents(L#l)), me);
+        if toDo == 0 then continue;
+        if toDo == 1 then (L = replace(l, m, L);)
+        else if toDo == 2 then return L;
     );
-    return true;
+    return L | {m};
 )
 
 growseeds = method();
@@ -27,41 +39,29 @@ growseeds(List, ZZ, ZZ) := (L, p, n) -> (
 
     -- This is the loop that determines the total number of poers that we need to check
     -- The formula is n(p-1) + 1
-    for i from 1 to (n*(p-1)+1) do (
+    for i from 1 to #gR do (
 
         -- Then, we iterate through all the elements of our seed list. 
-        for m to #L - 1 do (
+        for m when (m < (#M - 1)) do (
 
             -- If the pure power of the first element is minimal, then we continue. 
-            if (guideList#m != -1) then (
-                m' = L#m^i;
-                for n in L do (
-
+            if (guideList#0 != -1) then (
+                m' = M#m^i;
+                for n in M do (
+                    m' := M#m^i;
                     -- [P1] ST: This part mods out the exponents. 
                     me = flatten (exponents(m' * n));
-                    m' = 1;
-                    for pow to #me - 1 when (m' != 0) do (
-                        m' = m' * (gR#pow ^ (me#pow % p));
+                        m' = 1;
+                    for pow to #me - 1 do (
+                        m' = m' * (gR#pow ^ ((me#pow) % p));
                     );
                     -- [P1] FIN --
 
                     -- [P2] ST: This part appends the pure power element to the front of the list
                     -- We need to make sure that's its not 1 though. 
-                    if (m' != 1) then (
-                        if (n == L#m) then (
-                            M = {m'} | M;
-                        ) else ( -- Then adds non pure-powers to the end of the list. 
-                            M = M | {m'};
-                        );
-                    );
+                    M = isGandiniMinimal(M, m');
                     -- We do this so it's easy to check if the pure power is minimal in the next if statement. 
                     -- [P2] FIN --
-                );
-
-                -- We call this function to check for minimal status. If it's not, we update the guidelist accordingly, and remove that element. 
-                if (not isGandiniMinimal(M, M#0)) then (
-                    guideList#m = -1;
-                    M = drop(M, 1); -- drop removes the element. 
                 );
             );
         );

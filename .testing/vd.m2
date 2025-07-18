@@ -4,9 +4,9 @@ listIt = method();
 listIt := (n) -> (for i to n - 1 list random(ZZ)%2);
 
 RList = {
-    QQ[a..c], 
-    QQ[a..e], 
-    QQ[a..g]
+    QQ[x_1..x_3], 
+    QQ[v..z], 
+    QQ[x_1..x_7]
 };
 g = for i in RList list (numgens i);
 
