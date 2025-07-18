@@ -1,7 +1,7 @@
 -- Test document to test efficiency of certain algorithms.
 
 needsPackage "InvariantRing";
-load "/Users/gordienovak/special/combination_algorithms/com-pxp-v1-(v2-v3).m2";
+load "/Users/gordienovak/special/combination_algorithms/com-pxp-v2-(v3-v4).m2";
 load "vd.m2"
 
 dataFile = openOut "output.csv";
@@ -28,7 +28,7 @@ for r from 0 to (#RList - 1) do (
         );
         
         -- Testing DiagonalAction
-        diagInvars = (gens(RList#r ^ (diagonalAction ( WList#r, for i to ((numRows WList#r) - 1) list m, RList#r))));
+        diagInvars = sort(gens(RList#r ^ (diagonalAction ( WList#r, for i to ((numRows WList#r) - 1) list m, RList#r))));
         L := for loop to 20 list 
             (toList( 
                 timing (
@@ -51,8 +51,9 @@ for r from 0 to (#RList - 1) do (
         l = (for el in L list round(8,el_0));
         t2 = (sum l / #l);
         dataFile << (toString t2 | "," | toString (t1/t2) | "\n");
+        algInvars = sort (L_0_1);
         ML = for i to min(#diagInvars, #L_0_1) - 1 list (
-            if (diagInvars_i != L_0_1_i) then (
+            if (diagInvars_i != algInvars_i) then (
                 false
             ) else true
         );

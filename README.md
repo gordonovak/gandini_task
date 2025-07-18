@@ -1,79 +1,54 @@
-## Algorithm Details
+# im very tired
+This repository holds the components for the generation and growth algorithms, with all of their respective versions.
+
+You might think the naming convention of the files is bad, but if you use the ```tab``` key to autofill in the terminal, it's actually faster than typical file names. try it :p 
+
+Also there's no documentation yet. Whoops. 
 ***
-#### ```invariantgens.m2```
-The $\text{invariantgens}$ algorithm takes three inputs:
-* $R$, the ring being acted upon.
-* $W$, a weight matrix representing the group action on the ring.
-* $\mathbb Z_p$, the order of the elementary abelian $p$-group.
+### Generation Algorithms
+Please note that:
+* ```gen``` stands for generation (as in seed generation).
+* ```pxp``` stands for $\mathbb Z_p \times \mathbb Z_p$. 
+* ```vX``` stands for "version X"
 
-Then, it has one output:
-* $L$, a list of the minimal generating elements of the invariant ring. 
+The latest version is usually the best, but each outputs something different so please be selected with it. 
 
-In order to make this algorithm functional, it utilizes the ```expandseeds.m2``` code and the ```genseeds.m2``` code. 
+1. ```gen-pxp-v1.m2``` - the first generation iteration that "worked." sometimes misses some invariants but is relatively accurate. returns a list of polynomials in $R$. 
+2. ```gen-pxp-v2.m2``` - this one now starts using matricies and exporting the results in matrix form instead of polynomial form to optimize efficiency. returns a list of matricies $1\times n$. 
+3. ```gen-pxp-v3.m2``` - converts all the matricies to lists, because matricies in macaulay2 are actually really slow. returns a list of lists (that represent exponent vectors.)
+3. ```ZModVec.m2``` - the original method we came up with using all possible vectors in $\mathbb Z_2$. 
 
-##### ```genseeds.m2```
-The $\text{genseeds}$ algorithm takes three inputs:
-* $R$ the ring
-* $W$, the full rank n $\times$ m weight matrix representing the group action. (m $\geq$ n)
-* $\mathbb Z$-$\text{list}$, the list representing the dimensions of the $p$-group. 
-
-Then, the algorithm has one output:
-* $L$, a list of the generating seeds.
-
-```genseeds``` inputs a weight matrix $W$ thats linearly independent, so $\text{dim(ker}(W)) = m-n.$ 
-First we find one $n \times m$ sub matrix $A$ at such that $\det(A) \ne 0.$ 
-
-Now we can create $m-n$, $n \times n+1$ sub matrices. by taking our full-rank $n\times n$ sub-matrix $A$, than adding a column vector in $W$ not in $A$. That will give us $m-n$ choices for our sub matrices.
-
-Let $W_S$ be a sub matrix of $W,$ where $S$ is a the set of indices corresponding to the columns of $W$. For each $W_S$ we claim we can create a vector $\bar v_S$ such that all row vectors in $r_m \in W$ we have that $r_m \cdot \bar v_S =0$. We can define:
-
-$$\bar v_S = \sum_{a_i \in S} (-1)^{i+1}e_{a_i}p_{\hat{a_i}}.$$
-
-Then, $\bar v_S$ is an exponent vector, where for a component $v_i$, our resultant invariant for the ring $\mathbb K[x_1 \cdots x_n]$ is: 
-
-$$f(x_1 \, ... \; x_n) = \prod_{i=1}^n x_i^{v_i}.$$
-
-##### ```expandseeds.m2```
-After the seeds have been generated, the $\text{expandseeds}$ algorithm takes in two inputs:
-* $L$, a list of the generating seeds
-* $\mathbb Z$-$\text{list}$, a list of the dimensions of the weight matrix.
-
-Then, it will output:
-* $\text{Basis}$, a list containing the generators of the invariant ring. 
-
-In order to perform the expansion, ```expandseeds.m2``` performs the following algorithm:
-1. Add the generating seeds to $\text{Basis}$. 
-2. Multiplies the generating seeds to powers of themselves, and then mods out by the respective value in $\mathbb Z$-$\text{list}$. This operation is repeated a number of times equal to the number of generators of the ring, $R$. 
-3. Then, it adds the pure powers to the generating set $\text{Basis}$. 
-4. Finally, it performs a minimization algorithm to reduce elements that can be created by other elements.
-
-For more details, please refer to the comments in the code itself. 
 ***
 
-#### ```modVector.m2```
-The $\text{Abelian Skew Invariants}$ algorithm takes two inputs:
-* $W$, finite abelian group
-* $R$, a ring
+### Growth Algorithms
+All of these return a list of invariants in polynomial form (in $R$).
+* ```gro``` stands for growth (as in seed growth)
+1. ```goriginal.m2``` - lucas' original algorithm. only works in 3-variate case and not always. 
+2. ```gro-pxp-v0.m2``` - our first adaptation of the algorithm. works fine. misses invariants some of the time. returns a list of polynomials in $R$. 
+3. ```gro-pxp-v1.m2``` - first interation of the algorithm that gets all the invariants. returns a list of polynomials in $R$. 
+4. ```gro-pxp-v2.m2``` - first iteration of the algorithm to start implementing speed-oriented optimizations. because of this, it ends up missing a bunch of invariants. **oops**.
+5. ```gro-pxp-v3.m2``` - changes the polynomials to matricies and this speeds up performance. However, then I focused on getting all the invariants and that slowed the algorithm *way* down. 
+6. ```gro-pxp-v4.m2``` - this one changes out the matricies for list and is very efficient compared to the diagonalAction implementation in the ```InvariantRing``` package. *hooray*. 
+7. ```test.m2``` - please ignore this. thanks
 
-This gives us one output: 
-* $L$, a list of the invariants of $W$ over $R$. 
-
-Our algorithm is as follows:
-1. Calculate all possible vectors $\bar v_{z}\in \mathbb Z_2 \times \,...\times \mathbb Z_2$ of length $\ell$.  
-$\ell$ is the number of columns in our weight matrix, $W$. 
-2. Perform the operation $f=W\cdot\bar v_z$. 
-3. If $f\;\text{mod } p$ contains all $0$ entries, the exponent vector $\bar v_z$ is invariant, and add it to the list of invariants. 
-Here, $p$ is the respective size of the cyclic factor of the weight matrix. 
-4. Then, we compute the resultant invariants from the list of invariant exponent vectors.
 ***
-#### ```spoiled_invariantgens.m2```
-This file is a different version of the algorithm from the ```invariantgens.m2``` file. 
 
-The $\text{spoiled-invariantgens}$ algorithm takes three inputs:
-* $R$, the ring being acted upon.
-* $W$, a weight matrix representing the group action on the ring.
-* $p$, the order of the elementary abelian $p$-group.
+### Combination algorithms
+These algorithms combine the growth and generation algorithms together for greater efficiency, as they share memory, assets, and strategies for solving. Also very helpful for the testing in the ```.testing``` directory. 
+* ```com``` stands for combination (as in combination algorithm)
+* ```vA-(vB-vC)``` stands for:
+  * ```vA``` - the Ath version of the **combination** algorithm
+  * ```vB``` - the Bth version of the **generation** algorithm
+  * ```vC``` - the Cth version of the **growth** algorithm
 
-Then, it caculates the all possible determinants of the square submatricies of $W$. 
-We then extract the coefficients of the determinant of the submatrix and mod them out by $p$, and store the result in a list. 
-Finally, we remove redunancies from the list and return it. 
+    I ordered it like this because it's helpful to know at a glance what algorithms are in the combination algorithm. 
+1. ```com-pxp-v1-(v2-v3).m2``` - first iteration and attempt at combining the algorithms. contains algorithms that don't work, but it's pretty efficient, so i guess there's that
+2. ```com-pxp-v2-(v3-v4).m2``` - this algorithm works, and it's fast too. it utilizes the restructuring using lists throughout everything, so that's great. 
+3. ```coriginal.m2``` - the original combination algorithm developed during the Madison Macaulay2 workshop. It's fine. 
+
+***
+
+### Testing
+You can look inside the ```.testing``` folder for how i testing a lot of the stuff. the output is in ```.csv``` files so it makes it super easy to view and share and compare with the ```InvariantRing => diagonalAction``` method that's currently implemented. 
+
+Note that the ```vd.m2``` is just meant to store variables for testing. Unless you want to add additional rings and orders to test, there's not much reason to go in there. 

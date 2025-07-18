@@ -56,7 +56,8 @@ diagSub(Matrix, ZZ, PolynomialRing) := (W, d, R) -> (
 
     -- If there are no possible invariants, return an empty list. 
     if (subVars == matrix{{0}}) then (
-        error ("No invariants for this weight matrix.\n");
+        print ("No invariants for this weight matrix.\n");
+        print W;
         return {};
     );
 
@@ -90,13 +91,13 @@ diagSub(Matrix, ZZ, PolynomialRing) := (W, d, R) -> (
     ind := numgens R - 1;
 
     -- Then we create the list we're actually going to add stuff to.
-    seedList = for l in seedList list apply(l, x -> ((x % p) + p) % p);
+    seedList = for l in seedList list apply(l, x -> ((x % d) + d) % d);
     newList := seedList;
     trashList := seedList | {apply(ind + 1, i -> 0)};
     -- This is the loop that determines the total number of powers that we need to check
-    -- The formula is n(p-1) + 1
+    -- The formula is n(d-1) + 1
 
-    for i from 1 to (k*(p-1)) do (
+    for i from 1 to ((numRows W)*(d-1)) do (
 
         -- Then, we iterate through all the elements of our seed list. 
         for m when m < #newList do (
@@ -107,7 +108,7 @@ diagSub(Matrix, ZZ, PolynomialRing) := (W, d, R) -> (
             for n to #newList - 1 do (
                 n' := newList#n;
                 -- [P1] ST: This part mods out the exponents. 
-                m' = (m' + n') % p;
+                m' = (m' + n') % d;
                 -- [P1] FIN --
 
                 if (not isZero(m')) and (not any(trashList, t -> (m' == t))) then (
@@ -122,7 +123,7 @@ diagSub(Matrix, ZZ, PolynomialRing) := (W, d, R) -> (
 
 
     for i from 0 to (numgens R - 1) do (
-        newList = newList | {for k to numgens R - 1 list (if i == k then p else 0)};
+        newList = newList | {for k to numgens R - 1 list (if i == k then d else 0)};
     );
 
     polyList := {};
@@ -133,5 +134,5 @@ diagSub(Matrix, ZZ, PolynomialRing) := (W, d, R) -> (
         polyList = polyList | {n};
     );
 
-    return polyList;
+    return flatten entries mingens ideal polyList;
 )

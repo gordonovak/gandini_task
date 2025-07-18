@@ -5,7 +5,7 @@ listIt := (n) -> (for i to n - 1 list random(ZZ)%2);
 
 RList = {
     QQ[x_1..x_3], 
-    QQ[v..z], 
+    QQ[x_1..x_5], 
     QQ[x_1..x_7]
 };
 g = for i in RList list (numgens i);
